@@ -101,6 +101,19 @@ app.post("/profile/change-password", async (req, res) => {
     res.status(500).json({ success: false, message: "Password change failed", error: err });
   }
 });
+// ✅ Delete profile
+app.delete("/profile/delete/:username", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const conn = await pool.getConnection();
+    await conn.query("DELETE FROM users WHERE id = ?", [userId]);
+    conn.release();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Delete failed", error: err });
+  }
+});
 
 //
 // ✅ Travel Plan Routes
@@ -164,8 +177,6 @@ app.delete("/travel-plans/:id", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete travel plan", error: err });
   }
 });
-
-//
 // ✅ Start server
 //
 app.listen(3000, "0.0.0.0", () => {

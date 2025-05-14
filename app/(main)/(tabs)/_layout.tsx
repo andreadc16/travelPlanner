@@ -11,16 +11,46 @@ type TabIconProps = {
   focused: boolean;
 };
 
+// Custom TabIcon with rounded background when focused
 const TabIcon = ({ icon, color, label, focused }: TabIconProps) => (
   <View style={tw`items-center justify-center`}>
-    <Image
-      source={icon}
-      resizeMode="contain"
-      style={tw`w-6 h-6 mb-1`}
-      tintColor={color}
-    />
+    <View
+      style={[
+        tw`p-1 rounded-full`,
+        {
+          backgroundColor: focused ? "transparent" : "transparent",
+        },
+      ]}
+    >
+      <View
+  style={{
+    padding: 5,
+    borderWidth: 3,
+    borderColor: focused ? "blue" : "black",
+    borderRadius: 20, // Makes the border circular
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <Image
+    source={icon}
+    resizeMode="stretch"
+    style={{
+      width: 24,
+      height: 24,
+      tintColor: focused ? "blue" : "black",
+    }}
+  />
+</View>
+
+    </View>
     <Text
-      style={tw`text-xs ${focused ? "text-black font-bold" : "text-gray-500"}`}
+      style={{
+        fontSize: 12,
+        marginTop: 4,
+        color: focused ? "#1E90FF" : "#999",
+        fontWeight: focused ? "bold" : "normal",
+      }}
     >
       {label}
     </Text>
@@ -34,11 +64,15 @@ const TabsLayout = () => {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: "#fff",
+          position: "absolute",
+          backgroundColor: "transparent",
           borderTopWidth: 0,
+          elevation: 0,
           height: 60,
         },
+
       }}
+
     >
       <Tabs.Screen
         name="index"
@@ -47,41 +81,28 @@ const TabsLayout = () => {
             <TabIcon
               icon={icons.explore}
               color={color}
-              label="Explore"
+              label=""
               focused={focused}
+
             />
           ),
         }}
       />
-      
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              icon={icons.bell}
-              color={color}
-              label="Notifications"
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      
+
       <Tabs.Screen
         name="travel-checklist"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
-              icon={icons.notebook}
+              icon={icons.writing}
               color={color}
-              label="Plans"
+              label=""
               focused={focused}
             />
           ),
         }}
       />
-      
+
       <Tabs.Screen
         name="profile"
         options={{
@@ -89,7 +110,7 @@ const TabsLayout = () => {
             <TabIcon
               icon={icons.user}
               color={color}
-              label="Profile"
+              label=""
               focused={focused}
             />
           ),

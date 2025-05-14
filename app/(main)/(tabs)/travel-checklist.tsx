@@ -4,7 +4,7 @@ import axios from "axios";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
-  ScrollView,
+  Alert, ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -52,7 +52,7 @@ const TravelChecklistScreen = () => {
 
   const fetchPlans = async (id: number) => {
     try {
-      const res = await axios.get("http://192.168.0.111:3000/travel-plans", {
+      const res = await axios.get("http://192.168.0.16:3000/travel-plans", {
         params: { userId: id },
       });
       setTravelPlans(res.data);
@@ -76,7 +76,7 @@ const TravelChecklistScreen = () => {
 
     try {
       if (editingId !== null) {
-        await axios.put(`http://192.168.0.111:3000/travel-plans/${editingId}`, {
+        await axios.put(`http://192.168.0.16:3000/travel-plans/${editingId}`, {
           title,
           description,
           travelDate: formattedDate,
@@ -84,7 +84,7 @@ const TravelChecklistScreen = () => {
         });
         Toast.show({ type: "success", text1: "Plan updated" });
       } else {
-        await axios.post("http://192.168.0.111:3000/travel-plans", {
+        await axios.post("http://192.168.0.16:3000/travel-plans", {
           userId,
           title,
           description,
@@ -117,7 +117,7 @@ const TravelChecklistScreen = () => {
 
   const toggleComplete = async (plan: TravelPlan) => {
     try {
-      await axios.put(`http://192.168.0.111:3000/travel-plans/${plan.id}`, {
+      await axios.put(`http://192.168.0.16:3000/travel-plans/${plan.id}`, {
         title: plan.title,
         description: plan.description,
         travelDate: formatDateToYMD(plan.travel_date), // Correctly formatted date
@@ -129,14 +129,31 @@ const TravelChecklistScreen = () => {
     }
   };
 
-  const deletePlan = async (planId: number) => {
-    try {
-      await axios.delete(`http://192.168.0.111:3000/travel-plans/${planId}`);
-      if (userId) fetchPlans(userId);
-    } catch (err) {
-      Toast.show({ type: "error", text1: "Delete failed" });
-    }
-  };
+ 
+
+const deletePlan = (planId: number) => {
+  Alert.alert(
+    "Delete Plan",
+    "Are you sure you want to delete this travel plan?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await axios.delete(`http://192.168.0.16:3000/travel-plans/${planId}`);
+            if (userId) fetchPlans(userId);
+            Toast.show({ type: "success", text1: "Plan deleted" });
+          } catch (err) {
+            Toast.show({ type: "error", text1: "Delete failed" });
+          }
+        },
+      },
+    ]
+  );
+};
+
 
   const handleEdit = (plan: TravelPlan) => {
     setTitle(plan.title);

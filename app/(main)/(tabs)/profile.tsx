@@ -1,10 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import icons from "../../../constants/icons";
+
 
 export default function ProfileScreen() {
   const [userId, setUserId] = useState("");
@@ -24,7 +25,7 @@ export default function ProfileScreen() {
       setUserId(storedId);
 
       try {
-        const res = await fetch(`http://192.168.0.111:3000/profile?userId=${storedId}`);
+        const res = await fetch(`http://192.168.0.16:3000/profile?userId=${storedId}`);
         const data = await res.json();
         setUsername(data.username);
         setEmail(data.email);
@@ -39,58 +40,151 @@ export default function ProfileScreen() {
     fetchUserData();
   }, []);
 
-  const handleProfileUpdate = async () => {
-    try {
-      const res = await fetch("http://192.168.0.111:3000/profile/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, username, email }),
-      });
 
-      const result = await res.json();
-      if (result.success) {
-        Toast.show({ type: "success", text1: "Profile updated" });
-      } else {
-        Toast.show({ type: "error", text1: "Update failed", text2: result.message || "" });
-      }
-    } catch {
-      Toast.show({ type: "error", text1: "Update error", text2: "Could not update profile" });
-    }
-  };
+const handleProfileUpdate = async () => {
+  Alert.alert(
+    "Confirm Update",
+    "Are you sure you want to update your profile information?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Update",
+        onPress: async () => {
+          try {
+            const res = await fetch("http://192.168.0.16:3000/profile/update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, username, email }),
+            });
 
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      return Toast.show({
-        type: "error",
-        text1: "Passwords do not match",
-      });
-    }
+            const result = await res.json();
+            if (result.success) {
+              Toast.show({ type: "success", text1: "Profile updated" });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Update failed",
+                text2: result.message || "",
+              });
+            }
+          } catch {
+            Toast.show({
+              type: "error",
+              text1: "Update error",
+              text2: "Could not update profile",
+            });
+          }
+        },
+      },
+    ]
+  );
+};
 
-    try {
-      const res = await fetch("http://192.168.0.111:3000/profile/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, currentPassword, newPassword }),
-      });
+  
+const deleteProfile = async () => {
+  const userId = await AsyncStorage.getItem("userId");
 
-      const result = await res.json();
-      if (result.success) {
-        Toast.show({ type: "success", text1: "Password changed" });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      } else {
-        Toast.show({ type: "error", text1: "Password change failed", text2: result.message || "" });
-      }
-    } catch {
-      Toast.show({ type: "error", text1: "Error", text2: "Could not change password" });
-    }
-  };
+  Alert.alert(
+    "Confirm Deletion",
+    "Are you sure you want to delete your profile? This action cannot be undone.",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await fetch(`http://192.168.0.16:3000/profile/delete/${username}`, {
+              method: "DELETE",
+            });
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("userId");
-    router.replace("/(auth)/login");
-  };
+            await AsyncStorage.removeItem("userId");
+            Toast.show({ type: "success", text1: "Profile deleted" });
+            router.replace("/(auth)/login");
+          } catch (err) {
+            Toast.show({ type: "error", text1: "Delete failed" });
+          }
+        },
+      },
+    ]
+  );
+};
+
+
+const handleChangePassword = () => {
+  if (newPassword !== confirmPassword) {
+    return Toast.show({
+      type: "error",
+      text1: "Passwords do not match",
+    });
+  }
+
+  Alert.alert(
+    "Confirm Password Change",
+    "Are you sure you want to change your password?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Change",
+        onPress: async () => {
+          try {
+            const res = await fetch("http://192.168.0.16:3000/profile/change-password", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, currentPassword, newPassword }),
+            });
+
+            const result = await res.json();
+            if (result.success) {
+              Toast.show({ type: "success", text1: "Password changed" });
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+            } else {
+              Toast.show({
+                type: "error",
+                text1: "Password change failed",
+                text2: result.message || "",
+              });
+            }
+          } catch {
+            Toast.show({
+              type: "error",
+              text1: "Error",
+              text2: "Could not change password",
+            });
+          }
+        },
+      },
+    ]
+  );
+};
+
+
+  const handleLogout = () => {
+  Alert.alert(
+    "Log Out",
+    "Are you sure you want to log out?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out",
+        onPress: async () => {
+          await AsyncStorage.removeItem("userId");
+          router.replace("/(auth)/login");
+        },
+      },
+    ]
+  );
+};
+
+
 
   return (
     <ScrollView
@@ -130,6 +224,15 @@ export default function ProfileScreen() {
             <Text style={styles.saveButtonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: "#6b7280", marginTop: 10 }]}
+            onPress={deleteProfile}
+          >
+            <Text style={styles.saveButtonText}>Delete Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
@@ -137,48 +240,48 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { 
-    alignItems: "center", 
-    marginBottom: 32 
+  header: {
+    alignItems: "center",
+    marginBottom: 32
   },
-  name: { 
-    fontSize: 22, 
-    fontWeight: "600" 
+  name: {
+    fontSize: 22,
+    fontWeight: "600"
   },
-  email: { 
-    fontSize: 14, 
-    color: "#666", 
-    marginTop: 4 
+  email: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4
   },
-  section: { 
-    borderTopWidth: 1, 
-    borderTopColor: "#ddd", 
-    paddingTop: 16, 
-    marginBottom: 24 
+  section: {
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 16,
+    marginBottom: 24
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "600", 
-    marginBottom: 12 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12
   },
-  input: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 8, 
-    paddingVertical: 10, 
-    paddingHorizontal: 14, 
-    marginBottom: 12, 
-    fontSize: 16 
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    fontSize: 16
   },
-  saveButton: { 
-    backgroundColor: "#10b981", 
-    paddingVertical: 12, 
-    borderRadius: 8, 
-    alignItems: "center" 
+  saveButton: {
+    backgroundColor: "#10b981",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center"
   },
-  saveButtonText: { 
-    color: "#fff", 
-    fontSize: 16, 
-    fontWeight: "600" 
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600"
   },
 });
